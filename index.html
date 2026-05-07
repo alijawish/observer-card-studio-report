@@ -35,6 +35,9 @@
     font-size: 16px;
     line-height: 1.7;
     -webkit-font-smoothing: antialiased;
+    overflow-wrap: break-word;
+    word-break: normal;
+    overflow-x: hidden;
   }
 
   /* ─── PAGE LAYOUT ─── */
@@ -467,6 +470,8 @@
     font-size: 14px;
     color: var(--text-sec);
     line-height: 1.6;
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
 
   /* ─── IMPACT SECTION ─── */
@@ -604,6 +609,68 @@
     margin-bottom: 28px;
   }
 
+  /* ─── INTRO DEFINITION ─── */
+  .intro-def {
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--gold);
+    background: var(--off-black);
+    border-radius: 0 0 6px 6px;
+    padding: 28px 32px;
+    margin-bottom: 48px;
+  }
+
+  .intro-def-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .intro-def-text {
+    font-size: 15px;
+    line-height: 1.9;
+    color: var(--text);
+  }
+
+  .intro-def-text strong {
+    color: var(--text-bright);
+  }
+
+  /* ─── OBSTACLE BLOCK ─── */
+  .obstacle-block {
+    background: rgba(224,90,58,0.05);
+    border: 1px solid rgba(224,90,58,0.2);
+    border-right: 3px solid var(--red);
+    border-radius: 0 4px 4px 0;
+    padding: 20px 24px;
+    margin: 24px 0;
+  }
+
+  .obstacle-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--red);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  /* ─── HIGHLIGHT BOX ─── */
+  .highlight-box {
+    background: var(--gold-dim);
+    border: 1px solid rgba(247,183,24,0.25);
+    border-right: 4px solid var(--gold);
+    border-radius: 0 6px 6px 0;
+    padding: 28px 32px;
+    margin: 40px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-bright);
+    line-height: 1.7;
+  }
+
   /* ─── DIVIDER ─── */
   .divider {
     height: 1px;
@@ -644,10 +711,149 @@
     .features-grid { grid-template-columns: 1fr; }
     .templates-list { grid-template-columns: repeat(2,1fr); }
     .cover-meta { flex-wrap: wrap; gap: 24px; }
+    .intro-def { padding: 20px; }
+    .obstacle-block { padding: 16px 18px; }
+    .body-text { font-size: 15px; word-break: keep-all; overflow-wrap: break-word; }
+    .step-title { font-size: 14px; }
+    .step-desc { font-size: 13px; }
+    .callout p { font-size: 15px; }
+    .pull-quote { font-size: 18px; }
+    .section-title { font-size: 22px; }
+    .workflow::before { display: none; }
+    .workflow-step { gap: 14px; }
+    .step-num { width: 38px; height: 38px; font-size: 13px; }
   }
+  /* ─── LIGHT THEME ─── */
+  body.theme-light {
+    --black: #f0ede8;
+    --off-black: #ffffff;
+    --dark: #f7f4ef;
+    --mid: #ede9e2;
+    --border: #d8d2c8;
+    --muted: #999;
+    --text-sec: #666;
+    --text: #2a2520;
+    --text-bright: #0f0d0a;
+    --gold: #b8890a;
+    --gold-dim: rgba(184,137,10,0.1);
+    --gold-dim2: rgba(184,137,10,0.06);
+    --blue: #2a7ab8;
+    --green: #2a8a5a;
+    --red: #c04020;
+  }
+
+  body.theme-light .cover::before {
+    background: repeating-linear-gradient(
+      90deg, transparent, transparent 60px,
+      rgba(184,137,10,0.05) 60px, rgba(184,137,10,0.05) 61px
+    );
+  }
+
+  body.theme-light .obstacle-block {
+    background: rgba(192,64,32,0.04);
+    border-color: rgba(192,64,32,0.18);
+  }
+
+  /* ─── THEME TOGGLE ─── */
+  .theme-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--off-black);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 8px 16px 8px 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--gold);
+  }
+
+  .toggle-track {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    background: var(--border);
+    position: relative;
+    transition: background 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .toggle-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--gold);
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    transition: transform 0.3s ease, background 0.3s ease;
+  }
+
+  body.theme-light .toggle-thumb {
+    transform: translateX(-16px);
+  }
+
+  body.theme-light .toggle-track {
+    background: var(--gold);
+  }
+
+  body.theme-light .toggle-thumb {
+    background: #fff;
+    transform: translateX(-16px);
+  }
+
+  .toggle-label {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 12px;
+    color: var(--text-sec);
+    white-space: nowrap;
+    transition: color 0.2s;
+  }
+
+  .toggle-icon {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  @media (max-width: 700px) {
+    .theme-toggle { top: 12px; left: 12px; padding: 6px 12px 6px 8px; }
+    .toggle-label { display: none; }
+  }
+
 </style>
+<script>
+  function initTheme() {
+    const saved = localStorage.getItem('reportTheme');
+    if (saved === 'light') document.body.classList.add('theme-light');
+  }
+  function toggleTheme() {
+    const isLight = document.body.classList.toggle('theme-light');
+    localStorage.setItem('reportTheme', isLight ? 'light' : 'dark');
+    document.querySelector('.toggle-label').textContent = isLight ? 'الوضع الداكن' : 'الوضع الفاتح';
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    const isLight = document.body.classList.contains('theme-light');
+    document.querySelector('.toggle-label').textContent = isLight ? 'الوضع الداكن' : 'الوضع الفاتح';
+  });
+</script>
 </head>
 <body>
+
+<button class="theme-toggle" onclick="toggleTheme()" aria-label="تبديل الثيم">
+  <span class="toggle-icon">☀️</span>
+  <div class="toggle-track"><div class="toggle-thumb"></div></div>
+  <span class="toggle-label">الوضع الفاتح</span>
+</button>
 
 <div class="page">
 
@@ -661,8 +867,8 @@
     <p class="cover-subtitle">منظومة الأتمتة الذكية لإنتاج المحتوى الرقمي في جريدة عُمان أوبزرفر</p>
     <div class="cover-meta">
       <div class="meta-item">
-        <span class="meta-label">المطوّر</span>
-        <span class="meta-value">علي عبدالعزيز الجاويش</span>
+        <span class="meta-label">الجهة</span>
+        <span class="meta-value">عُمان أوبزرفر — وزارة الإعلام</span>
       </div>
       <div class="meta-divider"></div>
       <div class="meta-item">
@@ -676,11 +882,19 @@
       </div>
       <div class="meta-divider"></div>
       <div class="meta-item">
-        <span class="meta-label">المؤسسة</span>
-        <span class="meta-value">جريدة عُمان أوبزرفر</span>
+        <span class="meta-label">المصمم والمطوّر</span>
+        <span class="meta-value">علي عبد العزيز الجاويش</span>
       </div>
     </div>
   </header>
+
+  <!-- INTRO DEFINITION -->
+  <div class="intro-def">
+    <div class="intro-def-label">نظرة عامة</div>
+    <p class="intro-def-text">
+      <strong>«أوبزرفر كارد ستوديو»</strong> منظومة أتمتة رقمية متكاملة، صُمِّمت وبُنيت داخلياً من الصفر لتحويل إنتاج البطاقات الإخبارية (News Cards) من عملية يدوية معقدة إلى سير عمل ذكي وسلس. يربط النظام مباشرةً بقاعدة بيانات الموقع الإلكتروني لجريدة <strong>«عُمان أوبزرفر»</strong>، ويوظّف الذكاء الاصطناعي في توليد الصور، ويفرض الهوية البصرية آلياً في كل مخرج — مع واجهة استخدام مبسّطة تناسب المحرر لا المصمم. النتيجة: بطاقة إخبارية احترافية جاهزة للنشر في أقل من دقيقتين.
+    </p>
+  </div>
 
   <!-- KPI STATS -->
   <div class="stats-row">
@@ -693,8 +907,8 @@
       <div class="stat-label">تُجلب تلقائياً من الموقع بضغطة زر واحدة دون نسخ يدوي</div>
     </div>
     <div class="stat-cell">
-      <div class="stat-number">7<span class="stat-unit"> قوالب</span></div>
-      <div class="stat-label">بصرية متخصصة تغطي كافة تصنيفات الأخبار</div>
+      <div class="stat-number">6<span class="stat-unit">+ قوالب</span></div>
+      <div class="stat-label">بصرية متخصصة لكل فئة إخبارية، قابلة للتوسعة بحسب الاحتياج</div>
     </div>
   </div>
 
@@ -709,14 +923,26 @@
     <div class="chips-row">
       <span class="chip gold">الخلفية التشغيلية</span>
       <span class="chip blue">تحدي الهوية البصرية</span>
+      <span class="chip green">معادلة السرعة والجودة</span>
     </div>
 
     <p class="body-text">
-      في ظل تسارع وتيرة الأخبار اليومية، أصبح التواجد الفوري والفعال على منصات التواصل الاجتماعي متطلباً أساسياً وحيوياً لجريدة <strong>«عُمان أوبزرفر»</strong>. يتطلب العمل الصحفي اليومي إنتاجاً مستمراً للبطاقات الإخبارية التي تلخص الأحداث وتجذب القراء، مع ضرورة الحفاظ على تدفق عالي الجودة والالتزام الصارم بالهوية البصرية للمؤسسة.
+      في ظل تسارع وتيرة الأخبار اليومية، أصبح التواجد الفوري والفعال على منصات التواصل الاجتماعي متطلباً أساسياً وحيوياً لجريدة <strong>«عُمان أوبزرفر»</strong>. إذ تتطلب طبيعة عملنا الإعلامي إنتاجاً مستمراً للبطاقات الإخبارية (News Cards) التي تلخص الأحداث وتجذب القراء، مع ضرورة الحفاظ على تدفق عالي الجودة والالتزام الصارم بالهوية البصرية للمؤسسة.
     </p>
 
     <p class="body-text">
-      رغم توفر قوالب تصميم احترافية على برنامج <strong>InDesign</strong> وتقديم تدريب مكثف للمحررين، ظلت الطبيعة التقنية المعقدة للبرنامج تشكّل عائقاً أمام انسيابية الأداء اليومي. كان المحرر يخوض دورة عمل يدوية مطولة: من استحضار النصوص والصور، إلى ضبط القياسات بدقة هندسية، وصولاً إلى عمليات التصدير.
+      في السابق، تأسست آلية العمل على رؤية تهدف إلى تمكين المحررين ومسؤولي النشر من إنتاج هذه البطاقات بأنفسهم، لضمان سرعة النشر وعدم انتظار قسم التصميم لكل خبر. ولتحقيق ذلك، قمنا بإعداد قوالب تصميم احترافية مسبقة، وتقديم تدريب لفريق العمل، أملاً في الوصول إلى دورة نشر ذاتية ومستقلة تواكب تسارع الأخبار.
+    </p>
+
+    <div class="obstacle-block">
+      <div class="obstacle-label">العائق الميداني</div>
+      <p class="body-text" style="margin-bottom:0;">
+        ورغم الإعداد المسبق والتدريب المكثف، ظلت الطبيعة التقنية المعقدة لـ InDesign لغير المختصين عائقاً أمام انسيابية الأداء اليومي. كان المحرر يخوض دورة عمل يدوية مطولة — من استحضار النصوص والصور، إلى ضبط القياسات بدقة هندسية، وانتهاءً بعمليات التصدير — تستنزف ما بين 15 إلى 20 دقيقة للبطاقة الواحدة، وأحياناً بنتائج غير منضبطة بمعايير الجودة.
+      </p>
+    </div>
+
+    <p class="body-text">
+      أمام هذا الواقع، كان اللجوء إلى منصات التصميم الجاهزة خياراً متاحاً — لكنه تم استبعاده تماماً. فهذه المنصات، وإن كانت توفر قوالب «جميلة»، إلا أنها عاجزة عن إلزام المستخدم بضوابط الهوية البصرية لمؤسسة إعلامية رسمية. الجماليات وحدها لا تكفي، بل يجب أن تقترن برصانة تعكس ثقل جريدة <strong>«عُمان أوبزرفر»</strong> وتمنع أي تفاوت أو عشوائية في مخرجاتها البصرية.
     </p>
 
     <div class="split-grid">
@@ -772,25 +998,26 @@
       </div>
     </div>
 
-    <div class="callout">
-      <p>منصات التصميم الجاهزة تُوفّر قوالب «جميلة» لكنها تفتقر إلى الاحترافية الصارمة وعاجزة عن إلزام المستخدم بضوابط الهوية البصرية لمؤسسة إعلامية رسمية — الجماليات وحدها لا تكفي.</p>
-    </div>
   </section>
 
-  <!-- SECTION 2: SYSTEM -->
+  <!-- SECTION 2: SOLUTION -->
   <section class="section">
     <div class="section-header">
       <span class="section-number">02</span>
-      <h2 class="section-title">النظام: <em>بناء من الصفر</em></h2>
+      <h2 class="section-title">الحل: <em>نظام مستقل مبني من الصفر</em></h2>
     </div>
 
     <div class="chips-row">
       <span class="chip gold">ابتكار مستقل</span>
-      <span class="chip green">هندسة متكاملة</span>
+      <span class="chip green">بلا اشتراكات خارجية</span>
     </div>
 
     <p class="body-text">
-      ما يميّز مشروع <strong>«أوبزرفر كارد ستوديو»</strong> أنه نظام تم بناؤه وتطويره برمجياً وتصميمياً بالكامل من الصفر (From Scratch)، دون الاعتماد على برمجيات جاهزة أو منصات خارجية مدفوعة. شملت مراحل العمل كتابة الأكواد البرمجية، وهندسة واجهات الاستخدام، وتصميم القوالب — كل ذلك لضمان توافق تقني تام مع الاحتياجات التحريرية الدقيقة للجريدة.
+      لحل هذه المعادلة — السرعة الفائقة في الأداء مع الجودة والالتزام التام بالهوية — برزت الحاجة إلى تصميم نظام مخصص داخلياً. من هنا تم بناء وتطوير <strong>«أوبزرفر كارد ستوديو»</strong> (Observer Card Studio) بشكل مستقل تماماً من الصفر (From Scratch)، دون الاعتماد على أي برمجيات جاهزة أو منصات خارجية أو اشتراكات مدفوعة.
+    </p>
+
+    <p class="body-text">
+      شملت مراحل البناء كتابة الأكواد البرمجية، وهندسة واجهات الاستخدام، وتصميم القوالب — كل ذلك لضمان توافق تقني تام مع الاحتياجات التحريرية الدقيقة للجريدة. هذا النهج يمنح المؤسسة <strong>استقلالية تامة وسيطرة كاملة</strong> على النظام، مع إمكانية التطوير والتحديث المستمر وفق الاحتياج الفعلي دون أي قيود خارجية.
     </p>
 
     <div class="features-grid">
@@ -810,9 +1037,9 @@
         <div class="feature-desc">تعمل القوالب بمثابة حارس آلي يضمن اتساق الهوية البصرية في جميع المخرجات، ويُخفي وراءه تعقيداً هندسياً لتقديم واجهة في غاية البساطة.</div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">📱</div>
-        <div class="feature-title">توافق ميداني كامل</div>
-        <div class="feature-desc">صُممت الواجهة بتقنية Responsive Design لتعمل على جميع الأجهزة المحمولة، مما يمنح الفريق مرونة الإنتاج من أي مكان.</div>
+        <div class="feature-icon">🔓</div>
+        <div class="feature-title">استقلالية كاملة وتطوير مستمر</div>
+        <div class="feature-desc">لا اشتراكات ولا قيود خارجية — النظام ملك المؤسسة بالكامل مع إمكانية التعديل والتطوير والتحديث في أي وقت وفق المتطلبات المتجددة.</div>
       </div>
     </div>
   </section>
@@ -858,7 +1085,7 @@
       <div class="template-badge">
         <div class="badge-swatch" style="background:linear-gradient(135deg,#600018,#8b1010);"></div>
         <div class="badge-name">Statement</div>
-        <div class="badge-desc">بطاقات الاقتباسات والتصريحات</div>
+        <div class="badge-desc">بيانات</div>
       </div>
     </div>
   </section>
@@ -871,28 +1098,28 @@
       <h2 class="section-title">سير العمل: <em>من المقال إلى النشر</em></h2>
     </div>
 
-    <p class="body-text">دورة العمل الكاملة مصمّمة لتكون سلسة وخطية، تُقلل قرارات المحرر إلى الحد الأدنى لتكون البطاقة جاهزة للنشر خلال أقل من دقيقتين.</p>
+    <p class="body-text">دورة العمل الكاملة مصمّمة لتكون سلسة وخطية، تُقلل قرارات المحرر إلى الحد الأدنى وتُلقّه في مكان النشر خلال أقل من دقيقتين.</p>
 
     <div class="workflow">
       <div class="workflow-step">
         <div class="step-num">1</div>
-        <div class="step-content">
-          <div class="step-title">اختيار القالب</div>
-          <div class="step-desc">يختار المحرر القالب المناسب لنوع الخبر (محلي، عالمي، اقتصادي...) من شريط القوالب أعلى الواجهة.</div>
-        </div>
-      </div>
-      <div class="workflow-step">
-        <div class="step-num">2</div>
         <div class="step-content">
           <div class="step-title">جلب المحتوى التلقائي</div>
           <div class="step-desc">يعرض النظام آخر 8 مقالات منشورة. بضغطة "Use it" يُملأ القالب تلقائياً بالعنوان والتفاصيل والصورة.</div>
         </div>
       </div>
       <div class="workflow-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">إدخال الرابط يدوياً (اختياري)</div>
+          <div class="step-desc">أو يُلصق المحرر رابط أي مقال في شريط البحث ويضغط Extract لاستخراج المحتوى مباشرة من الصفحة.</div>
+        </div>
+      </div>
+      <div class="workflow-step">
         <div class="step-num">3</div>
         <div class="step-content">
-          <div class="step-title">إدخال URL يدوياً (اختياري)</div>
-          <div class="step-desc">أو يُلصق المحرر رابط أي مقال في شريط البحث ويضغط Extract لاستخراج المحتوى مباشرة من الصفحة.</div>
+          <div class="step-title">اختيار القالب</div>
+          <div class="step-desc">يختار المحرر القالب المناسب لنوع الخبر (محلي، عالمي، اقتصادي...) من شريط القوالب أعلى الواجهة.</div>
         </div>
       </div>
       <div class="workflow-step">
@@ -929,36 +1156,16 @@
     </div>
 
     <p class="body-text">
-      لكن القيمة الحقيقية لهذا الإنجاز لا تتوقف عند حدود تبسيط النشر الرقمي؛ فتصميم البطاقات الإخبارية يمثل جزءاً من المهام اليومية، وليس كلها. أتمتة هذه العمليات المتكررة هي خطوة استراتيجية في إدارة الموارد البشرية.
+      لكن القيمة الحقيقية لهذا الإنجاز لا تتوقف عند حدود تبسيط النشر الرقمي. فتصميم البطاقات الإخبارية يمثّل جزءاً من مهامنا اليومية، وليس كلّها. إن أتمتة هذه العمليات المتكررة هي في جوهرها خطوة استراتيجية لإدارة الموارد البشرية وإعادة توزيعها بذكاء.
     </p>
 
-    <p class="pull-quote">
-      «توفير هذا الوقت والجهد حرّر طاقاتنا من القيود التنفيذية الروتينية، وأتاح مساحة زمنية وذهنية ضرورية للتركيز على مهام إبداعية وفنية ذات قيمة أعلى للمؤسسة.»
-    </p>
-
-    <div class="value-list">
-      <div class="value-item">
-        <div class="value-line"></div>
-        <div class="value-text">
-          <strong>تطوير وإدارة وحدات البودكاست</strong>
-          إنتاج محتوى صوتي يُوسّع تأثير الجريدة ويخدم جمهوراً جديداً.
-        </div>
-      </div>
-      <div class="value-item">
-        <div class="value-line"></div>
-        <div class="value-text">
-          <strong>توحيد الهوية البصرية الشاملة</strong>
-          مراجعة وتطوير منظومة الهوية البصرية عبر جميع المنصات والمنتجات.
-        </div>
-      </div>
-      <div class="value-item">
-        <div class="value-line"></div>
-        <div class="value-text">
-          <strong>ابتكار مسارات حديثة للإنتاج الرقمي والذكاء الاصطناعي</strong>
-          استكشاف أدوات وتقنيات جديدة لتطوير صناعة المحتوى في بيئة الإعلام الرقمي المتسارع.
-        </div>
-      </div>
+    <div class="highlight-box">
+      «هذا النظام لم يختصر الوقت فحسب، بل أعاد توجيهه لخدمة التطور المستمر لـ «عُمان أوبزرفر».»
     </div>
+
+    <p class="body-text">
+      توفير هذا الوقت والجهد حرّر طاقات الفريق من المهام التنفيذية الروتينية، وأتاح مساحة زمنية وذهنية ضرورية للتركيز على مهام إبداعية وفنية ذات قيمة أعلى للمؤسسة — من تطوير وإدارة وحدات البودكاست، إلى تطوير الهوية البصرية الشاملة عبر جميع المنصات والمنتجات، وصولاً إلى ابتكار مسارات حديثة للإنتاج الرقمي وتوظيف الذكاء الاصطناعي في خدمة الصحافة والإعلام.
+    </p>
   </section>
 
 
