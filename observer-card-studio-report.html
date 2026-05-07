@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تقرير أوبزرفر كارد ستوديو</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --off-black: #111111;
+    --dark: #1a1a1a;
+    --mid: #2a2a2a;
+    --border: #2e2e2e;
+    --muted: #555;
+    --text-sec: #999;
+    --text: #e8e2d8;
+    --text-bright: #f5f0e8;
+    --gold: #f7b718;
+    --gold-dim: rgba(247,183,24,0.1);
+    --gold-dim2: rgba(247,183,24,0.06);
+    --blue: #4a9eda;
+    --green: #56c98a;
+    --red: #e05a3a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── PAGE LAYOUT ─── */
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 40px 100px;
+  }
+
+  /* ─── COVER ─── */
+  .cover {
+    position: relative;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 80px 0 60px;
+    margin-bottom: 80px;
+    overflow: hidden;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 60px,
+      rgba(247,183,24,0.025) 60px,
+      rgba(247,183,24,0.025) 61px
+    );
+    pointer-events: none;
+  }
+
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(to left, transparent, var(--gold), transparent);
+  }
+
+  .cover-eyebrow {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .cover-eyebrow::before {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .cover-title {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 58px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--text-bright);
+    margin-bottom: 10px;
+  }
+
+  .cover-title span {
+    color: var(--gold);
+  }
+
+  .cover-subtitle {
+    font-size: 20px;
+    font-weight: 300;
+    color: var(--text-sec);
+    margin-bottom: 48px;
+    max-width: 600px;
+  }
+
+  .cover-meta {
+    display: flex;
+    gap: 40px;
+    align-items: flex-end;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .meta-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .meta-value {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .meta-divider {
+    width: 1px;
+    height: 36px;
+    background: var(--border);
+    margin-bottom: 4px;
+  }
+
+  /* ─── STATS ROW ─── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 80px;
+  }
+
+  .stat-cell {
+    background: var(--off-black);
+    padding: 32px 28px;
+    position: relative;
+  }
+
+  .stat-cell::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 2px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.4s ease;
+  }
+
+  .stat-cell:hover::after {
+    transform: scaleX(1);
+  }
+
+  .stat-number {
+    font-family: 'Oswald', sans-serif;
+    font-size: 52px;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .stat-unit {
+    font-size: 20px;
+    color: rgba(247,183,24,0.5);
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: var(--text-sec);
+    line-height: 1.5;
+  }
+
+  /* ─── SECTIONS ─── */
+  .section {
+    margin-bottom: 72px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-number {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    padding-top: 5px;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-bright);
+    line-height: 1.3;
+  }
+
+  .section-title em {
+    font-style: normal;
+    color: var(--gold);
+  }
+
+  .body-text {
+    font-size: 16px;
+    line-height: 1.9;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .body-text strong {
+    color: var(--text-bright);
+    font-weight: 600;
+  }
+
+  /* ─── CALLOUT BLOCK ─── */
+  .callout {
+    border-right: 3px solid var(--gold);
+    background: var(--gold-dim2);
+    padding: 24px 28px;
+    margin: 32px 0;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .callout p {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text-bright);
+    line-height: 1.7;
+    font-style: italic;
+  }
+
+  /* ─── PROBLEM-SOLUTION SPLIT ─── */
+  .split-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 32px 0;
+  }
+
+  .split-cell {
+    background: var(--off-black);
+    padding: 28px;
+  }
+
+  .split-cell-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  .split-cell.problem .split-cell-label { color: var(--red); }
+  .split-cell.solution .split-cell-label { color: var(--green); }
+
+  .split-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .split-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .split-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 7px;
+  }
+
+  .problem .split-dot { background: var(--red); }
+  .solution .split-dot { background: var(--green); }
+
+  /* ─── FEATURES GRID ─── */
+  .features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 32px 0;
+  }
+
+  .feature-card {
+    background: var(--off-black);
+    padding: 28px;
+    transition: background 0.2s;
+  }
+
+  .feature-card:hover {
+    background: var(--dark);
+  }
+
+  .feature-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: var(--gold-dim);
+    border: 1px solid rgba(247,183,24,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    font-size: 18px;
+  }
+
+  .feature-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin-bottom: 8px;
+  }
+
+  .feature-desc {
+    font-size: 13px;
+    color: var(--text-sec);
+    line-height: 1.65;
+  }
+
+  /* ─── TEMPLATES SECTION ─── */
+  .templates-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 28px 0;
+  }
+
+  .template-badge {
+    padding: 16px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--off-black);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .badge-swatch {
+    width: 28px;
+    height: 6px;
+    border-radius: 3px;
+  }
+
+  .badge-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-bright);
+  }
+
+  .badge-desc {
+    font-size: 11px;
+    color: var(--text-sec);
+  }
+
+  /* ─── WORKFLOW STEPS ─── */
+  .workflow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 32px 0;
+    position: relative;
+  }
+
+  .workflow::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    bottom: 24px;
+    right: 23px;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+  }
+
+  .workflow-step {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding: 20px 0;
+    position: relative;
+  }
+
+  .step-num {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid var(--gold);
+    background: var(--off-black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 15px;
+    color: var(--gold);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-content {
+    padding-top: 10px;
+    flex: 1;
+  }
+
+  .step-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin-bottom: 6px;
+  }
+
+  .step-desc {
+    font-size: 14px;
+    color: var(--text-sec);
+    line-height: 1.6;
+  }
+
+  /* ─── IMPACT SECTION ─── */
+  .impact-block {
+    background: var(--off-black);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 40px;
+    margin: 32px 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .impact-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to left, transparent, var(--gold), transparent);
+  }
+
+  .impact-headline {
+    font-size: 42px;
+    font-weight: 700;
+    font-family: 'Oswald', sans-serif;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+
+  .impact-sub {
+    font-size: 16px;
+    color: var(--text-sec);
+    margin-bottom: 24px;
+  }
+
+  .impact-desc {
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.8;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+  }
+
+  /* ─── STRATEGIC VALUE ─── */
+  .value-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 28px 0;
+  }
+
+  .value-item {
+    display: grid;
+    grid-template-columns: 3px 1fr;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  .value-line {
+    background: var(--gold);
+    border-radius: 2px;
+  }
+
+  .value-text {
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.7;
+    padding: 4px 0;
+  }
+
+  .value-text strong {
+    color: var(--text-bright);
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  /* ─── FOOTER ─── */
+  .report-footer {
+    border-top: 1px solid var(--border);
+    padding-top: 40px;
+    margin-top: 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .footer-brand-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: var(--gold);
+  }
+
+  .footer-brand-sub {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .footer-logo svg {
+    width: 40px;
+    height: 40px;
+    color: var(--gold);
+    opacity: 0.6;
+  }
+
+  /* ─── TAG CHIP ─── */
+  .chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    border: 1px solid;
+  }
+
+  .chip.gold { color: var(--gold); border-color: rgba(247,183,24,0.4); background: var(--gold-dim2); }
+  .chip.blue { color: var(--blue); border-color: rgba(74,158,218,0.3); background: rgba(74,158,218,0.05); }
+  .chip.green { color: var(--green); border-color: rgba(86,201,138,0.3); background: rgba(86,201,138,0.05); }
+
+  .chips-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 48px 0;
+  }
+
+  .pull-quote {
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--text-bright);
+    line-height: 1.6;
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin: 48px 0;
+    position: relative;
+  }
+
+  .pull-quote::before {
+    content: '';
+    position: absolute;
+    top: -1px; right: 0;
+    width: 60px;
+    height: 2px;
+    background: var(--gold);
+  }
+
+  @media print {
+    body { background: #fff; color: #000; }
+  }
+
+  @media (max-width: 700px) {
+    .page { padding: 0 20px 60px; }
+    .cover-title { font-size: 36px; }
+    .stats-row { grid-template-columns: 1fr; }
+    .split-grid { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+    .templates-list { grid-template-columns: repeat(2,1fr); }
+    .cover-meta { flex-wrap: wrap; gap: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- COVER -->
+  <header class="cover">
+    <div class="cover-eyebrow">تقرير ابتكار وتطوير — ٢٠٢٥</div>
+    <h1 class="cover-title">
+      أوبزرفر<br>
+      <span>كارد ستوديو</span>
+    </h1>
+    <p class="cover-subtitle">منظومة الأتمتة الذكية لإنتاج المحتوى الرقمي في جريدة عُمان أوبزرفر</p>
+    <div class="cover-meta">
+      <div class="meta-item">
+        <span class="meta-label">المطوّر</span>
+        <span class="meta-value">علي عبدالعزيز الجاويش</span>
+      </div>
+      <div class="meta-divider"></div>
+      <div class="meta-item">
+        <span class="meta-label">الإصدار الحالي</span>
+        <span class="meta-value">v1.9</span>
+      </div>
+      <div class="meta-divider"></div>
+      <div class="meta-item">
+        <span class="meta-label">النوع</span>
+        <span class="meta-value">بناء مستقل من الصفر</span>
+      </div>
+      <div class="meta-divider"></div>
+      <div class="meta-item">
+        <span class="meta-label">المؤسسة</span>
+        <span class="meta-value">جريدة عُمان أوبزرفر</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- KPI STATS -->
+  <div class="stats-row">
+    <div class="stat-cell">
+      <div class="stat-number">&lt;<span class="stat-unit"> </span>2<span class="stat-unit"> دقيقة</span></div>
+      <div class="stat-label">وقت إنتاج البطاقة الإخبارية الواحدة وتجهيزها للنشر</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-number">8<span class="stat-unit"> مقالات</span></div>
+      <div class="stat-label">تُجلب تلقائياً من الموقع بضغطة زر واحدة دون نسخ يدوي</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-number">7<span class="stat-unit"> قوالب</span></div>
+      <div class="stat-label">بصرية متخصصة تغطي كافة تصنيفات الأخبار</div>
+    </div>
+  </div>
+
+
+  <!-- SECTION 1: CONTEXT -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-number">01</span>
+      <h2 class="section-title">المشكلة: <em>الوقت في مواجهة الجودة</em></h2>
+    </div>
+
+    <div class="chips-row">
+      <span class="chip gold">الخلفية التشغيلية</span>
+      <span class="chip blue">تحدي الهوية البصرية</span>
+    </div>
+
+    <p class="body-text">
+      في ظل تسارع وتيرة الأخبار اليومية، أصبح التواجد الفوري والفعال على منصات التواصل الاجتماعي متطلباً أساسياً وحيوياً لجريدة <strong>«عُمان أوبزرفر»</strong>. يتطلب العمل الصحفي اليومي إنتاجاً مستمراً للبطاقات الإخبارية التي تلخص الأحداث وتجذب القراء، مع ضرورة الحفاظ على تدفق عالي الجودة والالتزام الصارم بالهوية البصرية للمؤسسة.
+    </p>
+
+    <p class="body-text">
+      رغم توفر قوالب تصميم احترافية على برنامج <strong>InDesign</strong> وتقديم تدريب مكثف للمحررين، ظلت الطبيعة التقنية المعقدة للبرنامج تشكّل عائقاً أمام انسيابية الأداء اليومي. كان المحرر يخوض دورة عمل يدوية مطولة: من استحضار النصوص والصور، إلى ضبط القياسات بدقة هندسية، وصولاً إلى عمليات التصدير.
+    </p>
+
+    <div class="split-grid">
+      <div class="split-cell problem">
+        <div class="split-cell-label">التحديات السابقة</div>
+        <div class="split-items">
+          <div class="split-item">
+            <div class="split-dot"></div>
+            <span>15 إلى 20 دقيقة لإنتاج بطاقة واحدة</span>
+          </div>
+          <div class="split-item">
+            <div class="split-dot"></div>
+            <span>نسخ ولصق يدوي لكل نص وعنوان</span>
+          </div>
+          <div class="split-item">
+            <div class="split-dot"></div>
+            <span>اعتماد متواصل على برمجيات تقنية معقدة</span>
+          </div>
+          <div class="split-item">
+            <div class="split-dot"></div>
+            <span>خطر التفاوت في الهوية البصرية بين المحررين</span>
+          </div>
+          <div class="split-item">
+            <div class="split-dot"></div>
+            <span>استهلاك الطاقة الذهنية في مهام روتينية</span>
+          </div>
+        </div>
+      </div>
+      <div class="split-cell solution">
+        <div class="split-cell-label">ما يقدمه الحل الجديد</div>
+        <div class="split-items">
+          <div class="split-item">
+            <div class="split-dot"></div>
+            <span>أقل من دقيقتين من الفكرة للنشر</span>
+          </div>
+          <div class="split-item">
+            <div class="split-dot"></div>
+            <span>جلب تلقائي للمحتوى من قاعدة البيانات</span>
+          </div>
+          <div class="split-item">
+            <div class="split-dot"></div>
+            <span>واجهة مبسّطة لا تحتاج خبرة تقنية</span>
+          </div>
+          <div class="split-item">
+            <div class="split-dot"></div>
+            <span>هوية بصرية موحدة ومحمية آلياً في جميع المخرجات</span>
+          </div>
+          <div class="split-item">
+            <div class="split-dot"></div>
+            <span>توليد صور بالذكاء الاصطناعي عند الحاجة</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p>منصات التصميم الجاهزة تُوفّر قوالب «جميلة» لكنها تفتقر إلى الاحترافية الصارمة وعاجزة عن إلزام المستخدم بضوابط الهوية البصرية لمؤسسة إعلامية رسمية — الجماليات وحدها لا تكفي.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 2: SYSTEM -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-number">02</span>
+      <h2 class="section-title">النظام: <em>بناء من الصفر</em></h2>
+    </div>
+
+    <div class="chips-row">
+      <span class="chip gold">ابتكار مستقل</span>
+      <span class="chip green">هندسة متكاملة</span>
+    </div>
+
+    <p class="body-text">
+      ما يميّز مشروع <strong>«أوبزرفر كارد ستوديو»</strong> أنه نظام تم بناؤه وتطويره برمجياً وتصميمياً بالكامل من الصفر (From Scratch)، دون الاعتماد على برمجيات جاهزة أو منصات خارجية مدفوعة. شملت مراحل العمل كتابة الأكواد البرمجية، وهندسة واجهات الاستخدام، وتصميم القوالب — كل ذلك لضمان توافق تقني تام مع الاحتياجات التحريرية الدقيقة للجريدة.
+    </p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">الربط المباشر بقاعدة البيانات</div>
+        <div class="feature-desc">يعرض النظام تلقائياً آخر 8 مقالات من الموقع الإلكتروني. بضغطة زر "Use it" يُجلب العنوان والتفاصيل ويُسكَّن في القالب المناسب دون مغادرة منصة الاستوديو.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">توليد الصور بالذكاء الاصطناعي</div>
+        <div class="feature-desc">دُمج نموذج Gemini داخل بيئة العمل ليتيح توليد صور احترافية تتوافق مع السياق الخبري فورياً عند عدم توفر صور فوتوغرافية جاهزة.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📐</div>
+        <div class="feature-title">حارس الهوية البصرية</div>
+        <div class="feature-desc">تعمل القوالب بمثابة حارس آلي يضمن اتساق الهوية البصرية في جميع المخرجات، ويُخفي وراءه تعقيداً هندسياً لتقديم واجهة في غاية البساطة.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <div class="feature-title">توافق ميداني كامل</div>
+        <div class="feature-desc">صُممت الواجهة بتقنية Responsive Design لتعمل على جميع الأجهزة المحمولة، مما يمنح الفريق مرونة الإنتاج من أي مكان.</div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- SECTION 3: TEMPLATES -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-number">03</span>
+      <h2 class="section-title">القوالب البصرية: <em>تنوع يخدم كل خبر</em></h2>
+    </div>
+
+    <p class="body-text">
+      تم تزويد النظام منذ البداية بقوالب بصرية متعددة تراعي طبيعة وتنوع الأخبار، لضمان المرونة الكافية للتعامل مع أي نوع من المحتوى الإخباري الموجه للمنصات الرقمية.
+    </p>
+
+    <div class="templates-list">
+      <div class="template-badge">
+        <div class="badge-swatch" style="background:#15395e;"></div>
+        <div class="badge-name">Oman</div>
+        <div class="badge-desc">الأخبار المحلية العُمانية</div>
+      </div>
+      <div class="template-badge">
+        <div class="badge-swatch" style="background:#a01414;"></div>
+        <div class="badge-name">World</div>
+        <div class="badge-desc">الأخبار الدولية والعالمية</div>
+      </div>
+      <div class="template-badge">
+        <div class="badge-swatch" style="background:#b8671e;"></div>
+        <div class="badge-name">Business</div>
+        <div class="badge-desc">التقارير الاقتصادية والمالية</div>
+      </div>
+      <div class="template-badge">
+        <div class="badge-swatch" style="background:#2e5c3a;"></div>
+        <div class="badge-name">Sport</div>
+        <div class="badge-desc">الأخبار الرياضية</div>
+      </div>
+      <div class="template-badge">
+        <div class="badge-swatch" style="background:linear-gradient(135deg,#222,#444);"></div>
+        <div class="badge-name">Full BG</div>
+        <div class="badge-desc">قالب الخلفية الكاملة للصور البارزة</div>
+      </div>
+      <div class="template-badge">
+        <div class="badge-swatch" style="background:linear-gradient(135deg,#600018,#8b1010);"></div>
+        <div class="badge-name">Statement</div>
+        <div class="badge-desc">بطاقات الاقتباسات والتصريحات</div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- SECTION 4: WORKFLOW -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-number">04</span>
+      <h2 class="section-title">سير العمل: <em>من المقال إلى النشر</em></h2>
+    </div>
+
+    <p class="body-text">دورة العمل الكاملة مصمّمة لتكون سلسة وخطية، تُقلل قرارات المحرر إلى الحد الأدنى لتكون البطاقة جاهزة للنشر خلال أقل من دقيقتين.</p>
+
+    <div class="workflow">
+      <div class="workflow-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">اختيار القالب</div>
+          <div class="step-desc">يختار المحرر القالب المناسب لنوع الخبر (محلي، عالمي، اقتصادي...) من شريط القوالب أعلى الواجهة.</div>
+        </div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">جلب المحتوى التلقائي</div>
+          <div class="step-desc">يعرض النظام آخر 8 مقالات منشورة. بضغطة "Use it" يُملأ القالب تلقائياً بالعنوان والتفاصيل والصورة.</div>
+        </div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">إدخال URL يدوياً (اختياري)</div>
+          <div class="step-desc">أو يُلصق المحرر رابط أي مقال في شريط البحث ويضغط Extract لاستخراج المحتوى مباشرة من الصفحة.</div>
+        </div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-title">الضبط والتعديل</div>
+          <div class="step-desc">يُعدّل المحرر النص أو الصورة أو الألوان إن لزم، مع الحفاظ على حدود الهوية البصرية المُدمجة في النظام.</div>
+        </div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-title">التصدير والنشر</div>
+          <div class="step-desc">تصدير البطاقة بدقة عالية (1080×1350) جاهزة للنشر المباشر على جميع منصات التواصل الاجتماعي.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- SECTION 5: IMPACT -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-number">05</span>
+      <h2 class="section-title">الأثر: <em>توجيه الوقت نحو الإبداع</em></h2>
+    </div>
+
+    <div class="impact-block">
+      <div class="impact-headline">&lt; 2 دقيقة</div>
+      <div class="impact-sub">من الفكرة إلى البطاقة الجاهزة للنشر — انخفاض بنسبة تتجاوز 85% مقارنة بالآلية السابقة</div>
+      <p class="impact-desc">
+        أثمر هذا التطور التراكمي في النظام عن تقليص وقت تصميم البطاقة الإخبارية وتجهيزها للنشر إلى أقل من دقيقتين، محققاً الهدف الأهم: <strong>كفاءة وسرعة استثنائية في الأداء مع الحفاظ على أعلى درجات الجودة والاحترافية في التصميم.</strong>
+      </p>
+    </div>
+
+    <p class="body-text">
+      لكن القيمة الحقيقية لهذا الإنجاز لا تتوقف عند حدود تبسيط النشر الرقمي؛ فتصميم البطاقات الإخبارية يمثل جزءاً من المهام اليومية، وليس كلها. أتمتة هذه العمليات المتكررة هي خطوة استراتيجية في إدارة الموارد البشرية.
+    </p>
+
+    <p class="pull-quote">
+      «توفير هذا الوقت والجهد حرّر طاقاتنا من القيود التنفيذية الروتينية، وأتاح مساحة زمنية وذهنية ضرورية للتركيز على مهام إبداعية وفنية ذات قيمة أعلى للمؤسسة.»
+    </p>
+
+    <div class="value-list">
+      <div class="value-item">
+        <div class="value-line"></div>
+        <div class="value-text">
+          <strong>تطوير وإدارة وحدات البودكاست</strong>
+          إنتاج محتوى صوتي يُوسّع تأثير الجريدة ويخدم جمهوراً جديداً.
+        </div>
+      </div>
+      <div class="value-item">
+        <div class="value-line"></div>
+        <div class="value-text">
+          <strong>توحيد الهوية البصرية الشاملة</strong>
+          مراجعة وتطوير منظومة الهوية البصرية عبر جميع المنصات والمنتجات.
+        </div>
+      </div>
+      <div class="value-item">
+        <div class="value-line"></div>
+        <div class="value-text">
+          <strong>ابتكار مسارات حديثة للإنتاج الرقمي والذكاء الاصطناعي</strong>
+          استكشاف أدوات وتقنيات جديدة لتطوير صناعة المحتوى في بيئة الإعلام الرقمي المتسارع.
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- FOOTER -->
+  <footer class="report-footer">
+    <div class="footer-brand">
+      <div class="footer-brand-name">OMAN OBSERVER</div>
+      <div class="footer-brand-sub">Card Studio — Innovation Report 2025</div>
+    </div>
+    <div class="footer-logo">
+      <svg viewBox="0 0 784.42 784.42" fill="currentColor">
+        <path d="M427.99,633.21V151.21c0-18.31-14.98-33.28-33.28-33.28h-5.01c-18.3,0-33.27,14.97-33.27,33.27v482.01c0,18.34,14.98,33.31,33.29,33.31h5.42c18.11-.23,32.86-15.11,32.86-33.31M530.52,615.65c0,10.97-1.99,21.5-5.6,31.24-12.77,34.41-45.96,59.09-84.61,59.09h-96.2c-38.65,0-71.84-24.68-84.61-59.09-3.62-9.75-5.6-20.27-5.6-31.24V168.74c0-49.64,40.61-90.3,90.21-90.3h96.2c49.6,0,90.21,40.66,90.21,90.3v446.91ZM784.42,392.21C784.42,175.6,608.82,0,392.21,0S0,175.6,0,392.21s175.6,392.21,392.21,392.21,392.21-175.6,392.21-392.21"/>
+      </svg>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
