@@ -1,0 +1,898 @@
+import { useState, useRef, useEffect } from "react";
+
+// ── Constants ────────────────────────────────────────────────────────────────
+
+const FONTS = [
+  { name: "Playfair Display", stack: "Georgia, serif" },
+  { name: "Bebas Neue",       stack: "'Arial Narrow', sans-serif" },
+  { name: "Cormorant Garamond", stack: "Georgia, serif" },
+  { name: "Syne",             stack: "Futura, sans-serif" },
+  { name: "DM Serif Display", stack: "Georgia, serif" },
+  { name: "Montserrat",       stack: "Arial, sans-serif" },
+];
+
+const PALETTES = [
+  { name: "OO Heritage",    bg: "#0A0C10", accent: "#C8973A", text: "#F2EDE4", secondary: "#181C24",
+    note: "Aligned with Oman Observer brand" },
+  { name: "Gulf Ink",       bg: "#0D1117", accent: "#4EAADC", text: "#E6EDF3", secondary: "#161B22",
+    note: "Journalistic navy-cyan" },
+  { name: "Desert Dusk",    bg: "#13100C", accent: "#D4855A", text: "#F5EFE8", secondary: "#1E1914",
+    note: "Warm Omani earth tones" },
+  { name: "Prestige Black", bg: "#080808", accent: "#E0E0E0", text: "#FFFFFF", secondary: "#141414",
+    note: "High-contrast editorial" },
+  { name: "Copper Press",   bg: "#0E0B07", accent: "#B87333", text: "#F0EAE0", secondary: "#1A1510",
+    note: "Classic print copper" },
+  { name: "Teal Authority", bg: "#071820", accent: "#00C9A7", text: "#E0F5F0", secondary: "#0C2230",
+    note: "Modern media teal" },
+];
+
+const CATEGORIES = [
+  "Business","Technology","Politics","Culture","Economy",
+  "Society","Environment","Health","Innovation","Gulf Affairs",
+];
+
+const LOGO_STYLES = [
+  { id: "wordmark", label: "Wordmark",       desc: "Show name as the entire mark" },
+  { id: "monogram", label: "Monogram",       desc: "Initials lettermark" },
+  { id: "lockup",   label: "Icon + Wordmark",desc: "Symbol + show name side by side" },
+  { id: "emblem",   label: "Emblem Badge",   desc: "Contained shield or circular badge" },
+];
+
+const LAYOUT_STYLES = [
+  { id: "bold-center",  label: "Bold Centered",   desc: "Title-forward, symmetrical" },
+  { id: "editorial",    label: "Editorial Offset", desc: "Newspaper-inspired asymmetry" },
+  { id: "minimal-type", label: "Minimal Type",     desc: "Clean typographic only" },
+  { id: "host-photo",   label: "Host-Forward",     desc: "Host image dominates layout" },
+];
+
+const STEPS = ["Show Info","Visual Identity","Logo","Main Cover","Episode Cover","Brand Guide"];
+
+// ── Canvas text wrap ─────────────────────────────────────────────────────────
+function wrapText(ctx, text, x, y, maxW, lh) {
+  const words = text.split(" ");
+  let line = "", cy = y;
+  for (let n = 0; n < words.length; n++) {
+    const test = line + words[n] + " ";
+    if (ctx.measureText(test).width > maxW && n > 0) {
+      ctx.fillText(line.trim(), x, cy);
+      line = words[n] + " ";
+      cy += lh;
+    } else { line = test; }
+  }
+  ctx.fillText(line.trim(), x, cy);
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
+export default function App() {
+  const [step,     setStep]     = useState(0);
+  const [loading,  setLoading]  = useState(false);
+  const [aiOut,    setAiOut]    = useState("");
+
+  const [form, setForm] = useState({
+    showName: "", hostName: "", tagline: "", category: "", description: "",
+    palette: PALETTES[0], font: FONTS[0], logoStyle: "wordmark", coverLayout: "bold-center",
+    guestName: "", guestRole: "", guestOrg: "", episodeTitle: "", episodeNumber: "",
+  });
+
+  const mainCv    = useRef(null);
+  const episodeCv = useRef(null);
+  const up = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const pal = form.palette;
+
+  // ── Draw main cover ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (step < 3) return;
+    const cv = mainCv.current; if (!cv) return;
+    const ctx = cv.getContext("2d");
+    const W = 600, H = 600;
+    cv.width = W; cv.height = H;
+
+    ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, W, H);
+
+    // Subtle rings
+    ctx.save(); ctx.globalAlpha = 0.055; ctx.strokeStyle = pal.accent; ctx.lineWidth = 0.8;
+    for (let i = 1; i <= 7; i++) {
+      ctx.beginPath(); ctx.arc(W/2, H/2, i*58, 0, Math.PI*2); ctx.stroke();
+    }
+    ctx.restore();
+
+    // Parent brand banner
+    ctx.fillStyle = pal.secondary; ctx.fillRect(0, 0, W, 54);
+    ctx.fillStyle = pal.accent;   ctx.fillRect(0, 54, W, 2);
+    ctx.font = "bold 11px 'Segoe UI', sans-serif";
+    ctx.textAlign = "center"; ctx.fillText("OMAN OBSERVER PODCAST", W/2, 30);
+    ctx.fillStyle = pal.text; ctx.globalAlpha = 0.38;
+    ctx.font = "10px 'Segoe UI', sans-serif";
+    ctx.fillText("An Oman Observer Production", W/2, 46);
+    ctx.globalAlpha = 1;
+
+    // Category badge
+    if (form.category) {
+      const bw = form.category.length * 8 + 28;
+      ctx.fillStyle = pal.accent; ctx.globalAlpha = 0.13;
+      ctx.beginPath(); ctx.roundRect((W-bw)/2, 68, bw, 22, 3); ctx.fill();
+      ctx.globalAlpha = 1; ctx.fillStyle = pal.accent;
+      ctx.font = "bold 10px 'Segoe UI', sans-serif"; ctx.textAlign = "center";
+      ctx.fillText(form.category.toUpperCase(), W/2, 83);
+    }
+
+    // Show name
+    const name = form.showName || "Your Show Name";
+    const fs = name.length > 18 ? 44 : name.length > 12 ? 56 : 68;
+    ctx.fillStyle = pal.text;
+    ctx.textAlign = form.coverLayout === "editorial" ? "left" : "center";
+    const nx = form.coverLayout === "editorial" ? 44 : W/2;
+    ctx.font = `bold ${fs}px Georgia, serif`;
+    wrapText(ctx, name, nx, form.category ? 158 : 148, W - 80, fs * 1.15);
+
+    // Tagline
+    if (form.tagline) {
+      ctx.fillStyle = pal.accent; ctx.font = "italic 15px Georgia, serif";
+      ctx.textAlign = "center"; ctx.fillText(`"${form.tagline}"`, W/2, 330);
+    }
+
+    // Rule
+    ctx.fillStyle = pal.accent; ctx.globalAlpha = 0.65;
+    const rx = form.coverLayout === "editorial" ? 44 : W/2 - 36;
+    ctx.fillRect(rx, 356, 72, 2); ctx.globalAlpha = 1;
+
+    // Host
+    if (form.hostName) {
+      ctx.fillStyle = pal.text; ctx.globalAlpha = 0.5;
+      ctx.font = "13px 'Segoe UI', sans-serif"; ctx.textAlign = "center";
+      ctx.fillText(`Hosted by ${form.hostName}`, W/2, 388); ctx.globalAlpha = 1;
+    }
+
+    // Bottom bar + corner ticks
+    ctx.fillStyle = pal.accent; ctx.fillRect(0, H-7, W, 7);
+    ctx.globalAlpha = 0.3;
+    [[40, H-35],[W-60, H-35]].forEach(([x,y]) => ctx.fillRect(x, y, 20, 1.5));
+    ctx.globalAlpha = 1;
+
+  }, [step, form.showName, form.tagline, form.hostName, form.category,
+      form.palette, form.coverLayout]);
+
+  // ── Draw episode cover ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (step < 4) return;
+    const cv = episodeCv.current; if (!cv) return;
+    const ctx = cv.getContext("2d");
+    const W = 600, H = 600;
+    cv.width = W; cv.height = H;
+
+    ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, W, H);
+
+    // Diagonal sweep
+    ctx.save(); ctx.globalAlpha = 0.09; ctx.fillStyle = pal.accent;
+    ctx.beginPath(); ctx.moveTo(0,H*0.6); ctx.lineTo(W,H*0.38);
+    ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.fill(); ctx.restore();
+
+    // Header strip
+    ctx.fillStyle = pal.secondary; ctx.fillRect(0, 0, W, 62);
+    ctx.fillStyle = pal.accent;   ctx.fillRect(0, 62, W, 2);
+    ctx.fillStyle = pal.text; ctx.font = "bold 16px 'Segoe UI', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText((form.showName || "Your Show").slice(0, 28), W/2, 30);
+    ctx.fillStyle = pal.accent; ctx.globalAlpha = 0.5;
+    ctx.font = "10px 'Segoe UI', sans-serif";
+    ctx.fillText("OMAN OBSERVER PODCAST", W/2, 50); ctx.globalAlpha = 1;
+
+    // Episode badge
+    if (form.episodeNumber) {
+      ctx.fillStyle = pal.accent; ctx.globalAlpha = 0.16;
+      ctx.beginPath(); ctx.roundRect(W-106,14,92,28,4); ctx.fill();
+      ctx.globalAlpha = 1; ctx.fillStyle = pal.accent;
+      ctx.font = "bold 12px monospace"; ctx.textAlign = "center";
+      ctx.fillText(`EP. ${form.episodeNumber}`, W-60, 32);
+    }
+
+    // Avatar ring
+    ctx.save(); ctx.globalAlpha = 0.15; ctx.fillStyle = pal.accent;
+    ctx.beginPath(); ctx.arc(W/2,215,82,0,Math.PI*2); ctx.fill(); ctx.restore();
+    ctx.strokeStyle = pal.accent; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.45;
+    ctx.beginPath(); ctx.arc(W/2,215,82,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
+    ctx.fillStyle = pal.accent; ctx.globalAlpha = 0.5;
+    ctx.font = "46px serif"; ctx.textAlign = "center";
+    ctx.fillText("🎙", W/2-23, 236); ctx.globalAlpha = 1;
+
+    // GUEST label
+    ctx.fillStyle = pal.accent; ctx.globalAlpha = 0.55;
+    ctx.font = "bold 10px 'Segoe UI', sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("GUEST", W/2, 326); ctx.globalAlpha = 1;
+
+    // Guest name
+    const g = form.guestName || "Guest Name";
+    ctx.fillStyle = pal.text;
+    ctx.font = `bold ${g.length > 20 ? 24 : 30}px Georgia, serif`;
+    ctx.fillText(g, W/2, 355);
+    if (form.guestRole) {
+      ctx.fillStyle = pal.accent; ctx.font = "13px 'Segoe UI', sans-serif";
+      ctx.fillText(form.guestRole, W/2, 377);
+    }
+    if (form.guestOrg) {
+      ctx.fillStyle = pal.text; ctx.globalAlpha = 0.38;
+      ctx.font = "12px 'Segoe UI', sans-serif";
+      ctx.fillText(form.guestOrg, W/2, 396); ctx.globalAlpha = 1;
+    }
+
+    // Episode title
+    if (form.episodeTitle) {
+      ctx.fillStyle = pal.text; ctx.globalAlpha = 0.78;
+      ctx.font = `${form.episodeTitle.length > 28 ? 14 : 17}px Georgia, serif`;
+      wrapText(ctx, `"${form.episodeTitle}"`, W/2, 436, W-80, 22);
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.fillStyle = pal.accent; ctx.fillRect(0, H-6, W, 6);
+  }, [step, form]);
+
+  // ── AI ───────────────────────────────────────────────────────────────────
+  async function callAI(prompt) {
+    setLoading(true); setAiOut("");
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514", max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      const data = await res.json();
+      setAiOut(data.content?.[0]?.text || "Error generating output.");
+    } catch { setAiOut("❌ Connection error. Please try again."); }
+    setLoading(false);
+  }
+
+  const genBrandGuide = () => callAI(
+`You are a senior brand identity designer specialising in podcast and media brands.
+
+Generate a comprehensive, actionable Brand Identity Guide for:
+
+SHOW NAME: ${form.showName || "Untitled"}
+HOST: ${form.hostName || "N/A"}
+PARENT BRAND: Oman Observer Podcast (English-language media sub-show under Oman Observer, Oman's leading English-language newspaper)
+CATEGORY: ${form.category || "General"}
+TAGLINE: ${form.tagline || "N/A"}
+DESCRIPTION: ${form.description || "N/A"}
+CHOSEN PALETTE: ${pal.name} — background ${pal.bg}, accent ${pal.accent}
+CHOSEN FONT: ${form.font.name}
+LOGO STYLE: ${form.logoStyle}
+COVER LAYOUT: ${form.coverLayout}
+
+Include these sections (be specific, opinionated, and production-ready):
+
+## 1. Brand Personality
+Core traits, tone of voice, visual character. How this sub-show carves its own identity while living under the Oman Observer parent brand.
+
+## 2. Parent Brand Co-existence Rules
+When to show both logos. Brand hierarchy. How the English-language editorial authority of Oman Observer transfers to this sub-show without overshadowing it.
+
+## 3. Colour System
+All hex codes. Usage ratios (60/30/10). Psychological rationale for each colour in the Gulf/Omani English-media context. Approved and forbidden combinations.
+
+## 4. Typography System
+Display font, body font, caption font. Full size scale with exact pixel values. Tracking, line-height, and weight rules for every use case.
+
+## 5. Logo Rules
+Clear space rule. Minimum sizes. Approved backgrounds. Ten forbidden uses. All required versions.
+
+## 6. Main Cover Art Standard (3000×3000px)
+Grid zones. Mandatory elements. Hierarchy. Apple Podcasts compliance notes.
+
+## 7. Episode Cover Template
+Guest photo integration system. Zone breakdown. Batch production workflow.
+
+## 8. Social Media Rules
+Instagram post, Story, YouTube thumbnail, Twitter/X, LinkedIn — layout grid and hierarchy for each.
+
+## 9. Ten Things Never to Do
+Specific, common mistakes made by Gulf/MENA English podcast brands.`);
+
+  const genLogoSpec = () => callAI(
+`You are a senior logo designer. Write a complete technical logo specification:
+
+SHOW: ${form.showName || "Untitled"}
+PARENT: Oman Observer Podcast
+LOGO STYLE: ${form.logoStyle}
+ACCENT: ${pal.accent}
+BACKGROUND: ${pal.bg}
+FONT: ${form.font.name}
+CATEGORY: ${form.category || "General"}
+
+## Creative Concept
+The core idea and why it works for an English sub-show under Oman Observer.
+
+## Mark Description
+Exact geometry, proportions, and placement — detailed enough to reconstruct from scratch.
+
+## Typography Specification
+Font, weight, tracking (em), size relative to any mark, modified letterforms if any.
+
+## Figma / Illustrator Setup
+Artboard size, grid settings, export specifications.
+
+## Required Deliverables
+Primary (colour horizontal), Primary (colour stacked), Reversed white, Mono black, Mono white, Favicon/icon only, Co-branded lockup with "Oman Observer Podcast" parent line.
+
+## Five Unbreakable Logo Rules
+
+## Midjourney v6 Prompt
+A precise English prompt to generate a visual concept for this logo mark. Syntax: subject, style modifiers, --ar 1:1 --style raw --v 6`);
+
+  const genSocialPack = () => callAI(
+`You are a creative director producing English-language social content for a podcast sub-show under Oman Observer.
+
+SHOW: ${form.showName || "Untitled"}
+HOST: ${form.hostName || "N/A"}
+PARENT: Oman Observer Podcast
+GUEST: ${form.guestName || "N/A"}
+GUEST TITLE: ${form.guestRole || "N/A"}
+GUEST ORG: ${form.guestOrg || "N/A"}
+EPISODE TITLE: ${form.episodeTitle || "N/A"}
+EP. NO.: ${form.episodeNumber || "N/A"}
+PALETTE: ${pal.name} — bg ${pal.bg}, accent ${pal.accent}
+FONT: ${form.font.name}
+
+Write a complete Social Media Content Pack:
+
+## Instagram Post (1080×1080)
+Layout grid. Element hierarchy. Exact text to use. Caption template (English, 150–200 words) with hashtag strategy relevant to Oman/Gulf audience.
+
+## Instagram Story — 3-slide arc
+Teaser slide, Guest intro slide, Quote card slide. Layout + CTA copy for each.
+
+## YouTube Thumbnail (1280×720)
+High-CTR design breakdown. Text layers. Colour blocking. A/B variant suggestion.
+
+## Twitter/X Episode Announcement
+Two copy versions (tweet + thread starter). Visual card (1600×900) layout.
+
+## LinkedIn Post
+Professional-tone copy for Oman Observer's business audience. Visual (1200×627) layout.
+
+## Audiogram Frame (1080×1080)
+Best quote to pull (invent a plausible powerful line). Waveform style. Layout.
+
+## Reels/Shorts Frame (9:16)
+Key text overlay rules. Thumbnail frame design.
+
+## Midjourney v6 Prompt — Guest Portrait
+If no real photo is available: a photorealistic professional portrait for podcast episode art. Include lighting, background, attire, expression, camera lens. --ar 1:1 --v 6`);
+
+  // ── Shared styles ────────────────────────────────────────────────────────
+  const S = {
+    input:   { width:"100%", background:"#141414", border:`1px solid ${pal.accent}28`,
+               borderRadius:7, color:"#eee", padding:"9px 13px", fontSize:14,
+               fontFamily:"inherit", outline:"none", boxSizing:"border-box" },
+    label:   { fontSize:11, color:pal.accent, fontWeight:700, letterSpacing:"0.09em",
+               textTransform:"uppercase", marginBottom:5, display:"block" },
+    field:   { marginBottom:18 },
+    card:    { background:"#0e0e0e", border:`1px solid ${pal.accent}18`,
+               borderRadius:10, padding:20, marginBottom:18 },
+    primary: { background:pal.accent, color:pal.bg, border:"none", borderRadius:7,
+               padding:"11px 26px", fontSize:13, fontWeight:700, cursor:"pointer",
+               letterSpacing:"0.04em" },
+    ghost:   { background:"transparent", color:pal.accent, border:`1px solid ${pal.accent}50`,
+               borderRadius:7, padding:"8px 18px", fontSize:12, fontWeight:600, cursor:"pointer" },
+    h:       { color:pal.accent, margin:"0 0 18px", fontSize:17, fontWeight:700 },
+  };
+
+  // ── Steps ────────────────────────────────────────────────────────────────
+  const Step0 = () => (
+    <div>
+      <h3 style={S.h}>Show Information</h3>
+
+      {/* Parent brand callout */}
+      <div style={{...S.card, borderColor:pal.accent+"44", background:"#0a0d14", marginBottom:20}}>
+        <div style={{fontSize:11,color:pal.accent,fontWeight:700,letterSpacing:"0.08em",marginBottom:8}}>
+          PARENT BRAND
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:40,height:40,borderRadius:7,background:pal.accent,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:13,fontWeight:900,color:pal.bg}}>OO</div>
+          <div>
+            <div style={{color:pal.text,fontSize:15,fontWeight:700}}>Oman Observer Podcast</div>
+            <div style={{color:"#555",fontSize:12,marginTop:2}}>
+              English-language · Your sub-show lives under this umbrella
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {[
+        ["showName","Sub-show Name","e.g. The Gulf Report, Inside Muscat, OO Business Brief"],
+        ["hostName","Host Name","e.g. Sarah Al-Rashdi"],
+        ["tagline","Tagline","One sharp line that defines the show"],
+      ].map(([k,lbl,ph]) => (
+        <div key={k} style={S.field}>
+          <label style={S.label}>{lbl}</label>
+          <input style={S.input} value={form[k]} onChange={e=>up(k,e.target.value)} placeholder={ph}/>
+        </div>
+      ))}
+
+      <div style={S.field}>
+        <label style={S.label}>Category</label>
+        <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+          {CATEGORIES.map(c=>(
+            <button key={c} onClick={()=>up("category",c)}
+              style={{...S.ghost,padding:"5px 13px",
+                background:form.category===c?pal.accent:"transparent",
+                color:form.category===c?pal.bg:pal.accent,
+                borderColor:form.category===c?pal.accent:pal.accent+"44"}}>{c}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={S.field}>
+        <label style={S.label}>Show Description</label>
+        <textarea style={{...S.input,height:88,resize:"vertical"}}
+          value={form.description} onChange={e=>up("description",e.target.value)}
+          placeholder="Who is this show for? What does each episode deliver? What makes it distinct within Oman Observer's podcast family?"/>
+      </div>
+    </div>
+  );
+
+  const Step1 = () => (
+    <div>
+      <h3 style={S.h}>Visual Identity</h3>
+
+      <div style={S.field}>
+        <label style={S.label}>Colour Palette</label>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+          {PALETTES.map(p=>(
+            <button key={p.name} onClick={()=>up("palette",p)}
+              style={{background:p.bg,
+                border:form.palette.name===p.name?`2px solid ${p.accent}`:`1px solid ${p.accent}22`,
+                borderRadius:9,padding:13,cursor:"pointer",textAlign:"left"}}>
+              <div style={{display:"flex",gap:5,marginBottom:7}}>
+                {[p.bg,p.accent,p.text,p.secondary].map((c,i)=>(
+                  <div key={i} style={{width:15,height:15,borderRadius:"50%",
+                    background:c,border:"1px solid #ffffff12"}}/>
+                ))}
+              </div>
+              <div style={{color:p.text,fontSize:13,fontWeight:700}}>{p.name}</div>
+              <div style={{color:p.accent,fontSize:11,marginTop:3,opacity:0.65}}>{p.note}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={S.field}>
+        <label style={S.label}>Display Font</label>
+        <div style={{display:"flex",flexDirection:"column",gap:7}}>
+          {FONTS.map(f=>(
+            <button key={f.name} onClick={()=>up("font",f)}
+              style={{...S.ghost,textAlign:"left",padding:"11px 15px",fontSize:16,
+                fontFamily:f.stack,
+                background:form.font.name===f.name?pal.accent+"18":"transparent",
+                borderColor:form.font.name===f.name?pal.accent:pal.accent+"35",
+                color:form.font.name===f.name?pal.accent:pal.text}}>{f.name}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={S.field}>
+        <label style={S.label}>Cover Layout Style</label>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+          {LAYOUT_STYLES.map(ls=>(
+            <button key={ls.id} onClick={()=>up("coverLayout",ls.id)}
+              style={{...S.ghost,textAlign:"left",padding:"11px 14px",
+                background:form.coverLayout===ls.id?pal.accent+"18":"transparent",
+                borderColor:form.coverLayout===ls.id?pal.accent:pal.accent+"35"}}>
+              <div style={{color:pal.text,fontSize:13,fontWeight:600}}>{ls.label}</div>
+              <div style={{color:"#555",fontSize:11,marginTop:3}}>{ls.desc}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const Step2 = () => (
+    <div>
+      <h3 style={S.h}>Logo Design</h3>
+
+      <div style={S.field}>
+        <label style={S.label}>Logo Style</label>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {LOGO_STYLES.map(ls=>(
+            <button key={ls.id} onClick={()=>up("logoStyle",ls.id)}
+              style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+                background:form.logoStyle===ls.id?pal.accent+"18":"#121212",
+                border:`1px solid ${form.logoStyle===ls.id?pal.accent:pal.accent+"22"}`,
+                borderRadius:8,padding:"12px 15px",cursor:"pointer",textAlign:"left"}}>
+              <div>
+                <div style={{color:pal.text,fontSize:14,fontWeight:600}}>{ls.label}</div>
+                <div style={{color:"#555",fontSize:12,marginTop:2}}>{ls.desc}</div>
+              </div>
+              <div style={{width:7,height:7,borderRadius:"50%",
+                background:form.logoStyle===ls.id?pal.accent:"transparent",
+                border:`1px solid ${pal.accent}55`}}/>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Live preview */}
+      <div style={S.card}>
+        <div style={{fontSize:11,color:"#444",marginBottom:10,letterSpacing:"0.06em"}}>LIVE PREVIEW</div>
+        {/* Dark */}
+        <div style={{background:pal.bg,borderRadius:7,padding:"28px 20px",
+          display:"flex",alignItems:"center",justifyContent:"center",minHeight:110,marginBottom:8}}>
+          {form.logoStyle==="monogram" ? (
+            <div style={{color:pal.accent,fontSize:72,fontWeight:900,
+              fontFamily:form.font.stack,lineHeight:1}}>
+              {(form.showName||"S")[0].toUpperCase()}
+            </div>
+          ) : form.logoStyle==="lockup" ? (
+            <div style={{display:"flex",alignItems:"center",gap:14}}>
+              <div style={{width:44,height:44,borderRadius:8,background:pal.accent,
+                display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <span style={{color:pal.bg,fontSize:20,fontWeight:900}}>
+                  {(form.showName||"S")[0].toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <div style={{color:pal.text,fontSize:20,fontWeight:700,
+                  fontFamily:form.font.stack}}>{form.showName||"Show Name"}</div>
+                <div style={{color:pal.accent,fontSize:10,letterSpacing:"0.1em",marginTop:2}}>
+                  OMAN OBSERVER PODCAST
+                </div>
+              </div>
+            </div>
+          ) : form.logoStyle==="emblem" ? (
+            <div style={{width:100,height:100,borderRadius:"50%",
+              border:`2px solid ${pal.accent}`,display:"flex",
+              alignItems:"center",justifyContent:"center",flexDirection:"column",gap:3}}>
+              <div style={{color:pal.accent,fontSize:9,letterSpacing:"0.12em"}}>OO PODCAST</div>
+              <div style={{color:pal.text,fontSize:11,fontWeight:700,
+                fontFamily:form.font.stack,textAlign:"center",maxWidth:72}}>
+                {(form.showName||"Show Name").slice(0,10)}
+              </div>
+            </div>
+          ) : (
+            <div style={{textAlign:"center"}}>
+              <div style={{color:pal.text,fontSize:26,fontWeight:700,
+                fontFamily:form.font.stack,letterSpacing:"0.03em"}}>
+                {form.showName||"Your Show Name"}
+              </div>
+              <div style={{color:pal.accent,fontSize:10,letterSpacing:"0.14em",marginTop:5}}>
+                AN OMAN OBSERVER PODCAST
+              </div>
+            </div>
+          )}
+        </div>
+        {/* White reversed */}
+        <div style={{background:"#f4f4f4",borderRadius:7,padding:"16px 20px",
+          display:"flex",alignItems:"center",justifyContent:"center",minHeight:60}}>
+          <div style={{color:pal.bg,fontSize:20,fontWeight:700,fontFamily:form.font.stack}}>
+            {form.showName||"Show Name"}
+          </div>
+        </div>
+        <div style={{fontSize:11,color:"#444",marginTop:8}}>↑ Dark version + white-background reversed</div>
+      </div>
+
+      <button style={S.primary} onClick={genLogoSpec} disabled={loading}>
+        {loading?"⏳ Generating...":"✦ Generate Full Logo Specification"}
+      </button>
+
+      {aiOut && (
+        <div style={{...S.card,marginTop:14,maxHeight:420,overflowY:"auto"}}>
+          <pre style={{color:"#bbb",fontSize:13,lineHeight:1.75,whiteSpace:"pre-wrap",
+            fontFamily:"inherit",margin:0}}>{aiOut}</pre>
+        </div>
+      )}
+    </div>
+  );
+
+  const Step3 = () => (
+    <div>
+      <h3 style={S.h}>Main Podcast Cover</h3>
+      <div style={{...S.card,padding:0,overflow:"hidden"}}>
+        <canvas ref={mainCv} style={{width:"100%",display:"block"}}/>
+      </div>
+
+      <div style={{...S.card,background:"#080808"}}>
+        <div style={{fontSize:11,color:pal.accent,fontWeight:700,
+          letterSpacing:"0.07em",marginBottom:12}}>TECHNICAL SPECS</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:0}}>
+          {[["Dimensions","3000 × 3000 px"],["Resolution","72 DPI, RGB"],
+            ["Max filesize","500 KB"],["Format","JPEG or PNG"],
+            ["Aspect ratio","1:1 Square"],["Safe zone","Keep bottom 15% clear"]
+          ].map(([k,v])=>(
+            <div key={k} style={{display:"flex",justifyContent:"space-between",
+              padding:"7px 0",borderBottom:"1px solid #181818",fontSize:12}}>
+              <span style={{color:"#555"}}>{k}</span>
+              <span style={{color:pal.text,fontWeight:600}}>{v}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:14,padding:"10px 12px",background:pal.accent+"12",
+          borderRadius:6,fontSize:12,color:pal.accent,borderLeft:`3px solid ${pal.accent}`}}>
+          ⚠ Apple Podcasts overlays a progress bar on the bottom 15%. Keep logo and show
+          name well above that threshold.
+        </div>
+      </div>
+
+      <button style={S.primary} onClick={genBrandGuide} disabled={loading}>
+        {loading?"⏳ Generating...":"✦ Generate Full Brand Identity Guide"}
+      </button>
+
+      {aiOut && (
+        <div style={{...S.card,marginTop:14,maxHeight:500,overflowY:"auto"}}>
+          <pre style={{color:"#bbb",fontSize:13,lineHeight:1.8,whiteSpace:"pre-wrap",
+            fontFamily:"inherit",margin:0}}>{aiOut}</pre>
+        </div>
+      )}
+    </div>
+  );
+
+  const Step4 = () => (
+    <div>
+      <h3 style={S.h}>Episode Cover — Guest Edition</h3>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+        {[
+          ["guestName","Guest Full Name","e.g. Dr. Hessa Al-Lawati"],
+          ["guestRole","Title / Role","e.g. CEO, Oman Investment Authority"],
+          ["guestOrg","Organisation","e.g. Oman Investment Authority"],
+          ["episodeTitle","Episode Title","e.g. Building Oman's Sovereign Wealth"],
+          ["episodeNumber","Episode Number","e.g. 7"],
+        ].map(([k,lbl,ph])=>(
+          <div key={k} style={S.field}>
+            <label style={S.label}>{lbl}</label>
+            <input style={S.input} value={form[k]} onChange={e=>up(k,e.target.value)} placeholder={ph}/>
+          </div>
+        ))}
+      </div>
+
+      <div style={{...S.card,padding:0,overflow:"hidden",marginTop:4}}>
+        <canvas ref={episodeCv} style={{width:"100%",display:"block"}}/>
+      </div>
+
+      <div style={{...S.card,background:"#080808",marginTop:14}}>
+        <div style={{fontSize:11,color:pal.accent,fontWeight:700,letterSpacing:"0.07em",marginBottom:10}}>
+          EPISODE COVER RULES
+        </div>
+        {[
+          "Show name visible, secondary to the episode identity",
+          "Guest name is the largest typographic element",
+          "Episode number in a consistent badge position (top-right)",
+          "'Oman Observer Podcast' credited — present, not dominant",
+          "Legible at 150×150 px thumbnail",
+          "Guest face area minimum 300 px (photo or AI-generated stand-in)",
+        ].map(item=>(
+          <div key={item} style={{display:"flex",gap:10,padding:"5px 0",
+            borderBottom:"1px solid #141414",fontSize:12,color:"#777"}}>
+            <span style={{color:pal.accent}}>✓</span>{item}
+          </div>
+        ))}
+      </div>
+
+      <button style={S.primary} onClick={genSocialPack} disabled={loading}>
+        {loading?"⏳ Generating...":"✦ Generate Full Social Media Pack"}
+      </button>
+
+      {aiOut && (
+        <div style={{...S.card,marginTop:14,maxHeight:500,overflowY:"auto"}}>
+          <pre style={{color:"#bbb",fontSize:13,lineHeight:1.8,whiteSpace:"pre-wrap",
+            fontFamily:"inherit",margin:0}}>{aiOut}</pre>
+        </div>
+      )}
+    </div>
+  );
+
+  const Step5 = () => (
+    <div>
+      <h3 style={S.h}>✦ Brand Summary</h3>
+
+      {/* Identity card */}
+      <div style={S.card}>
+        <div style={{display:"flex",gap:16,alignItems:"flex-start",marginBottom:20}}>
+          <div style={{flexShrink:0}}>
+            <div style={{width:52,height:52,borderRadius:9,background:pal.accent,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:13,fontWeight:900,color:pal.bg}}>OO</div>
+            <div style={{width:52,height:2,background:pal.accent+"38",margin:"4px 0"}}/>
+            <div style={{width:52,height:30,borderRadius:6,
+              border:`1px solid ${pal.accent}44`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:9,fontWeight:700,color:pal.accent,textAlign:"center"}}>
+              {(form.showName||"SHOW").slice(0,6).toUpperCase()}
+            </div>
+          </div>
+          <div>
+            <div style={{color:"#444",fontSize:11,letterSpacing:"0.08em",marginBottom:4}}>
+              OMAN OBSERVER PODCAST
+            </div>
+            <div style={{color:pal.text,fontSize:22,fontWeight:700,fontFamily:form.font.stack}}>
+              {form.showName||"Your Show"}
+            </div>
+            {form.tagline&&<div style={{color:pal.accent,fontSize:13,marginTop:4,fontStyle:"italic"}}>
+              "{form.tagline}"</div>}
+            {form.hostName&&<div style={{color:"#555",fontSize:12,marginTop:4}}>
+              Hosted by {form.hostName}</div>}
+          </div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+          {[
+            ["Palette",   pal.name],
+            ["Font",      form.font.name],
+            ["Logo",      LOGO_STYLES.find(l=>l.id===form.logoStyle)?.label||"—"],
+            ["Category",  form.category||"—"],
+            ["Cover",     LAYOUT_STYLES.find(l=>l.id===form.coverLayout)?.label||"—"],
+            ["Language",  "English"],
+          ].map(([label,value])=>(
+            <div key={label} style={{background:"#0a0a0a",borderRadius:7,padding:11}}>
+              <div style={{fontSize:10,color:"#444",letterSpacing:"0.07em",marginBottom:3}}>
+                {label.toUpperCase()}</div>
+              <div style={{fontSize:12,color:pal.text,fontWeight:600}}>{value}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Colour swatches */}
+      <div style={S.card}>
+        <div style={{fontSize:11,color:pal.accent,fontWeight:700,
+          letterSpacing:"0.07em",marginBottom:12}}>OFFICIAL COLOUR PALETTE</div>
+        <div style={{display:"flex",gap:10}}>
+          {[["Background",pal.bg],["Accent",pal.accent],["Text",pal.text],["Secondary",pal.secondary]
+          ].map(([label,color])=>(
+            <div key={label} style={{flex:1,textAlign:"center"}}>
+              <div style={{height:48,borderRadius:7,background:color,
+                border:"1px solid #ffffff10",marginBottom:6}}/>
+              <div style={{fontSize:11,color:"#555"}}>{label}</div>
+              <div style={{fontSize:10,color:"#444",fontFamily:"monospace",marginTop:1}}>{color}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Deliverables */}
+      <div style={S.card}>
+        <div style={{fontSize:11,color:pal.accent,fontWeight:700,
+          letterSpacing:"0.07em",marginBottom:12}}>DELIVERABLES CHECKLIST</div>
+        {[
+          ["Logo SVG package","All 6 versions: colour, reversed, mono white/black, favicon, co-branded lockup",true],
+          ["Main cover art","3000×3000 px JPEG < 500 KB — submit to Apple & Spotify",true],
+          ["Episode cover template","Figma / PSD with locked zones for show, guest, episode info",true],
+          ["Social media pack","Instagram, Story, YouTube thumbnail, Twitter/X, LinkedIn, Audiogram",true],
+          ["Brand Guidelines PDF","All rules, colour codes, fonts, co-branding with Oman Observer",true],
+          ["Font licence files","Cleared fonts for team use in Figma / Adobe apps",false],
+          ["Audio branding brief","Intro jingle tone and outro music direction",false],
+        ].map(([title,desc,done])=>(
+          <div key={title} style={{display:"flex",gap:12,padding:"9px 0",
+            borderBottom:"1px solid #141414",alignItems:"flex-start"}}>
+            <div style={{width:18,height:18,borderRadius:4,flexShrink:0,marginTop:1,
+              background:done?pal.accent+"22":"#1a1a1a",
+              border:`1px solid ${done?pal.accent:"#2a2a2a"}`,
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {done&&<span style={{color:pal.accent,fontSize:11}}>✓</span>}
+            </div>
+            <div>
+              <div style={{color:pal.text,fontSize:13,fontWeight:600}}>{title}</div>
+              <div style={{color:"#555",fontSize:11,marginTop:2}}>{desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Co-branding hierarchy */}
+      <div style={{...S.card,borderColor:pal.accent+"44",background:"#08080f"}}>
+        <div style={{fontSize:11,color:pal.accent,fontWeight:700,
+          letterSpacing:"0.07em",marginBottom:12}}>CO-BRANDING HIERARCHY</div>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+          <div style={{flex:1,background:"#0e0e0e",borderRadius:7,padding:12,
+            textAlign:"center",border:`1px solid ${pal.accent}30`}}>
+            <div style={{color:pal.accent,fontSize:11,fontWeight:700}}>Oman Observer</div>
+            <div style={{color:"#444",fontSize:10,marginTop:2}}>
+              Parent brand — always present, never dominant
+            </div>
+          </div>
+          <div style={{color:"#333",fontSize:20}}>›</div>
+          <div style={{flex:1,background:"#0e0e0e",borderRadius:7,padding:12,
+            textAlign:"center",border:`1px solid ${pal.accent}50`}}>
+            <div style={{color:pal.text,fontSize:13,fontWeight:700,fontFamily:form.font.stack}}>
+              {form.showName||"Your Show"}
+            </div>
+            <div style={{color:"#555",fontSize:10,marginTop:2}}>
+              Sub-show — primary identity on all episode art
+            </div>
+          </div>
+        </div>
+        <div style={{fontSize:12,color:"#444",lineHeight:1.65}}>
+          The sub-show name is the hero on episode covers and social posts.
+          "Oman Observer Podcast" appears as a secondary attribution line —
+          always present for credibility and discoverability, never competing for visual dominance.
+        </div>
+      </div>
+
+      {/* Reference shows */}
+      <div style={{...S.card,background:"#070707"}}>
+        <div style={{fontSize:11,color:pal.accent,fontWeight:700,
+          letterSpacing:"0.07em",marginBottom:10}}>
+          REFERENCE: STRONG PODCAST VISUAL IDENTITIES
+        </div>
+        {[
+          ["The Daily (NYT)","Stripped-back wordmark — parent-brand trust transfers instantly"],
+          ["Hard Fork (NYT)","Bold two-tone split — sub-brand carved its own personality"],
+          ["Intelligence Squared","Editorial typography — authority without heavy-handedness"],
+          ["Freakonomics Radio","Illustrative icon — memorable across a decade of covers"],
+          ["The Ezra Klein Show","Host-name wordmark — personality as the brand anchor"],
+          ["Serial","Sparse type only — mystery as a deliberate design choice"],
+        ].map(([name,desc])=>(
+          <div key={name} style={{display:"flex",justifyContent:"space-between",
+            alignItems:"flex-start",padding:"7px 0",
+            borderBottom:"1px solid #131313",fontSize:12}}>
+            <span style={{color:pal.text,fontWeight:600,minWidth:180}}>{name}</span>
+            <span style={{color:"#444",textAlign:"right",flex:1}}>{desc}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const views = [Step0, Step1, Step2, Step3, Step4, Step5];
+  const Current = views[step];
+
+  // ── Shell ────────────────────────────────────────────────────────────────
+  return (
+    <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",background:"#080808",
+      minHeight:"100vh",color:"#f0f0f0"}}>
+
+      {/* Header */}
+      <div style={{background:"#0a0a0a",borderBottom:`1px solid ${pal.accent}18`,
+        padding:"14px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div>
+          <div style={{fontSize:15,fontWeight:700,color:pal.text,letterSpacing:"0.02em"}}>
+            Podcast Identity Designer
+          </div>
+          <div style={{fontSize:10,color:pal.accent,marginTop:2,letterSpacing:"0.1em"}}>
+            OMAN OBSERVER — ENGLISH SUB-SHOW BRAND SYSTEM
+          </div>
+        </div>
+        <div style={{display:"flex",gap:5}}>
+          {[pal.bg,pal.accent,pal.text].map((c,i)=>(
+            <div key={i} style={{width:11,height:11,borderRadius:"50%",
+              background:c,border:"1px solid #ffffff12"}}/>
+          ))}
+        </div>
+      </div>
+
+      {/* Step tabs */}
+      <div style={{background:"#0a0a0a",borderBottom:`1px solid ${pal.accent}0C`,
+        padding:"0 24px",display:"flex",overflowX:"auto"}}>
+        {STEPS.map((s,i)=>(
+          <button key={s} onClick={()=>{setStep(i);setAiOut("");}}
+            style={{background:"none",border:"none",cursor:"pointer",
+              padding:"11px 15px",fontSize:12,whiteSpace:"nowrap",fontFamily:"inherit",
+              transition:"all .15s",
+              color:step===i?pal.accent:"#3a3a3a",
+              fontWeight:step===i?700:400,
+              borderBottom:step===i?`2px solid ${pal.accent}`:"2px solid transparent"}}>
+            {i+1}. {s}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div style={{maxWidth:720,margin:"0 auto",padding:"24px 24px 48px"}}>
+        <Current/>
+
+        {/* Nav */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+          marginTop:28,paddingTop:18,borderTop:`1px solid ${pal.accent}15`}}>
+          {step>0
+            ?<button style={S.ghost} onClick={()=>{setStep(s=>s-1);setAiOut("");}}>← Back</button>
+            :<div/>}
+          {step<STEPS.length-1&&
+            <button style={S.primary} onClick={()=>{setStep(s=>s+1);setAiOut("");}}>
+              Next →
+            </button>}
+        </div>
+      </div>
+    </div>
+  );
+}
