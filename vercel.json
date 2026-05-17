@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    { "source": "/studio-tools-report.html", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "index, follow" }
+      ]
+    }
+  ]
+}
